@@ -1,0 +1,717 @@
+openapi: 3.1.0
+info:
+  title: RAG Chatbot API
+  description: |
+    API for the book-grounded RAG chatbot with personalization and translation features.
+    All chat responses are derived strictly from indexed book content.
+  version: 1.0.0
+  contact:
+    name: RAG Chatbot Team
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.yourbook.com
+    description: Production server
+
+tags:
+  - name: Chat
+    description: Book-grounded Q&A endpoints
+  - name: Translation
+    description: Chapter translation endpoints
+  - name: Auth
+    description: User authentication endpoints
+  - name: Health
+    description: Service health endpoints
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns service health status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: Send a chat message (full book mode)
+      description: |
+        Send a question to the chatbot. Answers are derived from indexed book content only.
+        If the question cannot be answered from the book, returns "Not covered in this book".
+      operationId: sendChatMessage
+      security:
+        - bearerAuth: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat/selected:
+    post:
+      tags: [Chat]
+      summary: Send a chat message (selected text mode)
+      description: |
+        Send a question about selected text. Answers are restricted to the provided text only.
+        Does not use RAG retrieval - uses only the selected_text as context.
+      operationId: sendSelectedTextMessage
+      security:
+        - bearerAuth: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectedTextRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Invalid request (e.g., missing selected text)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat/conversations:
+    get:
+      tags: [Chat]
+      summary: Get user's conversation history
+      description: Returns list of conversations for authenticated user
+      operationId: getConversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat/conversations/{conversationId}:
+    get:
+      tags: [Chat]
+      summary: Get conversation details with messages
+      description: Returns a single conversation with all its messages
+      operationId: getConversation
+      security:
+        - bearerAuth: []
+        - {}
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetailResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/translate/{chapterSlug}:
+    get:
+      tags: [Translation]
+      summary: Get chapter translation
+      description: |
+        Returns the Urdu translation of a chapter. If not cached, generates on-demand.
+        May return 202 Accepted if translation is in progress.
+      operationId: getChapterTranslation
+      parameters:
+        - name: chapterSlug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: chapter-1-introduction
+        - name: language
+          in: query
+          schema:
+            type: string
+            default: ur
+            enum: [ur]
+      responses:
+        '200':
+          description: Translation available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+        '202':
+          description: Translation in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationPendingResponse'
+        '404':
+          description: Chapter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Translation service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Translation]
+      summary: Request chapter translation
+      description: Initiates translation of a chapter if not already cached
+      operationId: requestChapterTranslation
+      parameters:
+        - name: chapterSlug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationRequest'
+      responses:
+        '200':
+          description: Translation already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+        '202':
+          description: Translation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationPendingResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/preferences:
+    put:
+      tags: [Auth]
+      summary: Update user preferences
+      operationId: updateUserPreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferencesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Health
+    HealthResponse:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: string
+              enum: [up, down]
+            qdrant:
+              type: string
+              enum: [up, down]
+            openai:
+              type: string
+              enum: [up, down]
+
+    # Chat
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: The user's question
+        conversation_id:
+          type: string
+          format: uuid
+          description: Optional conversation ID to continue existing conversation
+
+    SelectedTextRequest:
+      type: object
+      required: [message, selected_text]
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: The user's question about the selected text
+        selected_text:
+          type: string
+          minLength: 10
+          maxLength: 10000
+          description: The text selected by the user
+        conversation_id:
+          type: string
+          format: uuid
+          description: Optional conversation ID
+
+    ChatResponse:
+      type: object
+      required: [message, conversation_id, sources]
+      properties:
+        message:
+          type: string
+          description: The assistant's response
+        conversation_id:
+          type: string
+          format: uuid
+          description: Conversation ID for follow-up messages
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceReference'
+          description: Source references (empty for selected-text mode or "not covered")
+        is_covered:
+          type: boolean
+          description: Whether the question was answerable from book content
+
+    SourceReference:
+      type: object
+      required: [chapter, relevance]
+      properties:
+        chapter:
+          type: string
+          description: Chapter slug
+        section:
+          type: string
+          description: Section title within chapter
+        relevance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Relevance score
+
+    ConversationListResponse:
+      type: object
+      required: [conversations, total]
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ConversationSummary:
+      type: object
+      required: [id, mode, created_at, message_count]
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [full_book, selected_text]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+        preview:
+          type: string
+          description: First user message (truncated)
+
+    ConversationDetailResponse:
+      type: object
+      required: [id, mode, messages, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [full_book, selected_text]
+        selected_text:
+          type: string
+          description: Only present if mode is selected_text
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      required: [id, role, content, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        source_refs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceReference'
+        created_at:
+          type: string
+          format: date-time
+
+    # Translation
+    TranslationRequest:
+      type: object
+      required: [language]
+      properties:
+        language:
+          type: string
+          enum: [ur]
+          default: ur
+
+    TranslationResponse:
+      type: object
+      required: [chapter_slug, language, content, created_at]
+      properties:
+        chapter_slug:
+          type: string
+        language:
+          type: string
+        content:
+          type: string
+          description: Translated chapter content
+        created_at:
+          type: string
+          format: date-time
+
+    TranslationPendingResponse:
+      type: object
+      required: [chapter_slug, language, status]
+      properties:
+        chapter_slug:
+          type: string
+        language:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress]
+        estimated_seconds:
+          type: integer
+          description: Estimated time to completion
+
+    # Auth
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [access_token, user]
+      properties:
+        access_token:
+          type: string
+          description: JWT token
+        token_type:
+          type: string
+          default: bearer
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      required: [id, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfileResponse:
+      type: object
+      required: [user, preferences]
+      properties:
+        user:
+          $ref: '#/components/schemas/UserProfile'
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+
+    UserPreferences:
+      type: object
+      required: [experience_level, preferred_language, chapters_read]
+      properties:
+        experience_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        preferred_language:
+          type: string
+          enum: [en, ur]
+        chapters_read:
+          type: array
+          items:
+            type: string
+          description: List of chapter slugs the user has read
+
+    UpdatePreferencesRequest:
+      type: object
+      properties:
+        experience_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        preferred_language:
+          type: string
+          enum: [en, ur]
+        chapters_read:
+          type: array
+          items:
+            type: string
+
+    UserPreferencesResponse:
+      type: object
+      required: [preferences]
+      properties:
+        preferences:
+          $ref: '#/components/schemas/UserPreferences'
+
+    # Errors
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+              enum:
+                - VALIDATION_ERROR
+                - UNAUTHORIZED
+                - NOT_FOUND
+                - RATE_LIMITED
+                - SERVICE_UNAVAILABLE
+                - INTERNAL_ERROR
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: string
+              description: Additional error details (dev mode only)

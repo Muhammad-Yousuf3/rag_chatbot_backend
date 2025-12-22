@@ -1,0 +1,97 @@
+# Docker Compose for RAG Chatbot
+# T091 - Multi-container development and deployment configuration
+
+version: '3.8'
+
+services:
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rag-chatbot-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/ragchatbot}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-in-production}
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    networks:
+      - rag-network
+    restart: unless-stopped
+
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: rag-chatbot-db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-ragchatbot}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-network
+    restart: unless-stopped
+
+  # Qdrant vector database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: rag-chatbot-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - rag-network
+    restart: unless-stopped
+
+  # Frontend (Docusaurus + React components)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rag-chatbot-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - rag-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:
+
+networks:
+  rag-network:
+    driver: bridge
