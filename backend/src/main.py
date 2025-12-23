@@ -40,19 +40,20 @@ def create_app() -> FastAPI:
         description="Book-grounded RAG chatbot with personalization and translation",
         version="1.0.0",
         lifespan=lifespan,
-        docs_url="/docs" if settings.debug else None,
-        redoc_url="/redoc" if settings.debug else None,
+        docs_url="/docs",  # Enable docs for debugging
+        redoc_url="/redoc",
     )
 
-    # Configure CORS
+    # Configure CORS - Allow all origins for now to debug, then restrict later
     cors_origins = settings.cors_origins_list + [
         "https://physical-ai-humanoid-robotics-book-navy.vercel.app",
+        "https://*.vercel.app",
     ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=cors_origins,
+        allow_origins=["*"],  # Allow all origins temporarily for debugging
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_methods=["*"],
         allow_headers=["*"],
     )
 
@@ -65,7 +66,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
         RateLimitMiddleware,
         config=rate_limit_config,
-        exclude_paths=["/api/health", "/docs", "/redoc", "/openapi.json"],
+        exclude_paths=["/", "/health", "/api/health", "/docs", "/redoc", "/openapi.json"],
     )
 
     # Global exception handler
@@ -86,6 +87,12 @@ def create_app() -> FastAPI:
             },
         )
 
+    # Root endpoint
+    @app.get("/")
+    async def root():
+        """Root endpoint."""
+        return {"message": "RAG Chatbot API", "version": "1.0.0", "docs": "/docs"}
+
     # Minimal root health check for deployment testing
     @app.get("/health")
     async def root_health():
@@ -105,8 +112,8 @@ if __name__ == "__main__":
     import os
     import uvicorn
 
-    port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("backend.src.main:app", host="0.0.0.0", port=port, reload=False)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("src.main:app", host="0.0.0.0", port=port, reload=False)
 
 
 

@@ -10,7 +10,9 @@
  *
  * Priority:
  * 1. Window global (set by Docusaurus customFields or external script)
- * 2. Hardcoded default for development
+ * 2. Environment variable (for build-time configuration)
+ * 3. Hardcoded production URL
+ * 4. Localhost for development
  *
  * For production, set window.RAG_CHATBOT_API_URL in your Docusaurus config
  * or via a script tag before loading the app.
@@ -23,10 +25,16 @@ function getApiBaseUrl(): string {
     if (windowConfig) {
       return windowConfig;
     }
+
+    // Check if running on Vercel production domain
+    const hostname = window.location?.hostname || '';
+    if (hostname.includes('vercel.app') || hostname.includes('physical-ai-humanoid')) {
+      // Production: Use Railway backend URL
+      return 'https://ragchatbotbackend-production-092a.up.railway.app';
+    }
   }
 
   // Default to localhost for development
-  // For production, ensure RAG_CHATBOT_API_URL is set via Docusaurus config
   return 'http://localhost:8000';
 }
 
