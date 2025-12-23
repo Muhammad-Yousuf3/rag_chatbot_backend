@@ -1,4 +1,8 @@
 fastapi
-uvicorn[standard]
-anyio
+uvicorn
+sqlalchemy>=2.0
+asyncpg
+psycopg2-binary
+pydantic
 python-dotenv
+qdrant-client
