@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter
 
-from src.api.auth import router as auth_router
-from src.api.chat import router as chat_router
-from src.api.health import router as health_router
-from src.api.translate import router as translate_router
+from .auth import router as auth_router
+from .chat import router as chat_router
+from .health import router as health_router
+from .translate import router as translate_router
 
 # Create main API router
 router = APIRouter()
