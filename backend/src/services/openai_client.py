@@ -3,7 +3,7 @@
 This file maintains backward compatibility by re-exporting from gemini_client.
 """
 
-from src.services.gemini_client import (
+from .gemini_client import (
     GeminiService,
     get_gemini_service,
 )

@@ -13,8 +13,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.agents.translate_agent import TranslateAgent, get_translate_agent
-from src.models.translation import Translation, TranslationStatus
+from ..agents.translate_agent import TranslateAgent, get_translate_agent
+from ..models.translation import Translation, TranslationStatus
 
 
 @dataclass

@@ -1,6 +1,6 @@
 """Middleware components for the RAG Chatbot API."""
 
-from src.middleware.rate_limit import (
+from .rate_limit import (
     RateLimitConfig,
     RateLimitMiddleware,
     RateLimiter,

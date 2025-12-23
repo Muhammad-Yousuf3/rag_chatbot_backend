@@ -8,11 +8,11 @@ from uuid import uuid4
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.db.database import Base
+from ..db.database import Base
 
 if TYPE_CHECKING:
-    from src.models.message import Message
-    from src.models.user import User
+    from .message import Message
+    from .user import User
 
 
 class ConversationMode(str, enum.Enum):

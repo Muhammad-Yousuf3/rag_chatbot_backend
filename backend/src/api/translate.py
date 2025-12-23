@@ -9,14 +9,14 @@ from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.database import get_db
-from src.schemas.translate import (
+from ..db.database import get_db
+from ..schemas.translate import (
     TranslationErrorResponse,
     TranslationPendingResponse,
     TranslationRequest,
     TranslationResponse,
 )
-from src.services.translation_service import TranslationService, get_translation_service
+from ..services.translation_service import TranslationService, get_translation_service
 
 router = APIRouter(prefix="/translate", tags=["translate"])
 

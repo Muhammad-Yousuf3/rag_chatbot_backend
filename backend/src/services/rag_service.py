@@ -8,9 +8,9 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from src.config import get_settings
-from src.services.openai_client import OpenAIClient
-from src.services.qdrant_client import QdrantService
+from ..config import get_settings
+from .openai_client import OpenAIClient
+from .qdrant_client import QdrantService
 
 logger = logging.getLogger(__name__)
 
@@ -236,8 +236,8 @@ def get_rag_service() -> RAGService:
     Returns:
         Configured RAGService instance.
     """
-    from src.services.openai_client import get_openai_client
-    from src.services.qdrant_client import get_qdrant_service
+    from .openai_client import get_openai_client
+    from .qdrant_client import get_qdrant_service
 
     return RAGService(
         qdrant_client=get_qdrant_service(),
@@ -260,8 +260,8 @@ def create_rag_service(
     Returns:
         Configured RAGService instance.
     """
-    from src.services.openai_client import get_openai_client
-    from src.services.qdrant_client import get_qdrant_service
+    from .openai_client import get_openai_client
+    from .qdrant_client import get_qdrant_service
 
     if qdrant_client is None:
         qdrant_client = get_qdrant_service()

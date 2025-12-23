@@ -1,6 +1,6 @@
 """Pydantic schemas for API request/response validation."""
 
-from src.schemas.chat import (
+from .chat import (
     ChatRequest,
     ChatResponse,
     SelectedTextRequest,

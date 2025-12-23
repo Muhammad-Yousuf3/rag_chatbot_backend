@@ -1,6 +1,6 @@
 """Utility functions and helpers for the RAG Chatbot API."""
 
-from src.utils.logging import (
+from .logging import (
     JSONFormatter,
     StructuredLogger,
     app_logger,

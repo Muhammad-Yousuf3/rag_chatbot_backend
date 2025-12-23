@@ -9,7 +9,7 @@ import sys
 from datetime import datetime
 from typing import Any, Optional
 
-from src.config import get_settings
+from ..config import get_settings
 
 
 class JSONFormatter(logging.Formatter):

@@ -1,9 +1,9 @@
 """Database models module."""
 
-from src.models.conversation import Conversation, ConversationMode
-from src.models.message import Message, MessageRole
-from src.models.translation import Translation, TranslationStatus
-from src.models.user import User, UserPreference, ExperienceLevel
+from .conversation import Conversation, ConversationMode
+from .message import Message, MessageRole
+from .translation import Translation, TranslationStatus
+from .user import User, UserPreference, ExperienceLevel
 
 __all__ = [
     "Conversation",

@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, String, Text, JSON
 from sqlalchemy.orm import relationship
 
-from src.db.database import Base
+from ..db.database import Base
 
 if TYPE_CHECKING:
-    from src.models.conversation import Conversation
+    from .conversation import Conversation
 
 
 class ExperienceLevel(str, enum.Enum):

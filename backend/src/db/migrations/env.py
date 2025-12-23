@@ -8,12 +8,12 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from src.config import get_settings
-from src.db.database import Base
+from ...config import get_settings
+from ..database import Base
 
 # Import all models to register them with Base.metadata
-from src.models.conversation import Conversation  # noqa: F401
-from src.models.message import Message  # noqa: F401
+from ...models.conversation import Conversation  # noqa: F401
+from ...models.message import Message  # noqa: F401
 
 config = context.config
 

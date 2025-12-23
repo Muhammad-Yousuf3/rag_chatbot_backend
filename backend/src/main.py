@@ -11,10 +11,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.src.api import router as api_router
-from backend.src.config import get_settings
-from backend.src.middleware.rate_limit import RateLimitMiddleware, RateLimitConfig
-from backend.src.utils.logging import setup_logging, get_logger
+from .api import router as api_router
+from .config import get_settings
+from .middleware.rate_limit import RateLimitMiddleware, RateLimitConfig
+from .utils.logging import setup_logging, get_logger
 
 logger = get_logger(__name__)
 
@@ -97,8 +97,8 @@ if __name__ == "__main__":
     import uvicorn
 
     port = int(os.environ.get("PORT", 8080))
-
     uvicorn.run("backend.src.main:app", host="0.0.0.0", port=port, reload=False)
+
 
 
 

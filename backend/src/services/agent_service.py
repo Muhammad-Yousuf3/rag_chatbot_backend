@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-from src.agents.rag_agent import RAGAgent, get_rag_agent
-from src.models.conversation import Conversation, ConversationMode
-from src.models.message import Message, MessageRole
-from src.services.rag_service import RAGService, SourceReference, get_rag_service
+from ..agents.rag_agent import RAGAgent, get_rag_agent
+from ..models.conversation import Conversation, ConversationMode
+from ..models.message import Message, MessageRole
+from .rag_service import RAGService, SourceReference, get_rag_service
 
 
 @dataclass

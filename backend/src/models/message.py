@@ -8,10 +8,10 @@ from uuid import uuid4
 from sqlalchemy import DateTime, Enum, ForeignKey, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.db.database import Base
+from ..db.database import Base
 
 if TYPE_CHECKING:
-    from src.models.conversation import Conversation
+    from .conversation import Conversation
 
 
 class MessageRole(str, enum.Enum):

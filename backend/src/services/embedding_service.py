@@ -4,8 +4,8 @@ from typing import List
 
 import tiktoken
 
-from src.config import get_settings
-from src.services.openai_client import get_openai_service
+from ..config import get_settings
+from .openai_client import get_openai_service
 
 
 class EmbeddingService:

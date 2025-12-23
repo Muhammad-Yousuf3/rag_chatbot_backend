@@ -15,17 +15,17 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.auth import get_current_user_optional, get_current_user_required
-from src.db.database import get_db
-from src.models.conversation import Conversation
-from src.schemas.auth import (
+from .auth import get_current_user_optional, get_current_user_required
+from ..db.database import get_db
+from ..models.conversation import Conversation
+from ..schemas.auth import (
     ConversationDetailResponse,
     ConversationListResponse,
     ConversationSummary,
     MessageResponse,
 )
-from src.schemas.chat import ChatRequest, ChatResponse, SelectedTextRequest, SourceReference
-from src.services.agent_service import AgentService, get_agent_service
+from ..schemas.chat import ChatRequest, ChatResponse, SelectedTextRequest, SourceReference
+from ..services.agent_service import AgentService, get_agent_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 

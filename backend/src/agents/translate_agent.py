@@ -7,8 +7,8 @@ translating chapter content to Urdu.
 from pathlib import Path
 from typing import Any
 
-from src.config import get_settings
-from src.services.gemini_client import GeminiService, get_gemini_service
+from ..config import get_settings
+from ..services.gemini_client import GeminiService, get_gemini_service
 
 
 class TranslateAgent:

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Enum, Index, JSON, String, Text
 
-from src.db.database import Base
+from ..db.database import Base
 
 
 class TranslationStatus(str, enum.Enum):

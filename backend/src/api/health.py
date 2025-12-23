@@ -5,8 +5,8 @@ from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from src.services.openai_client import get_openai_service
-from src.services.qdrant_client import get_qdrant_service
+from ..services.openai_client import get_openai_service
+from ..services.qdrant_client import get_qdrant_service
 
 router = APIRouter()
 
