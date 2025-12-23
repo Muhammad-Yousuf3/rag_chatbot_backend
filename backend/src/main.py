@@ -45,9 +45,12 @@ def create_app() -> FastAPI:
     )
 
     # Configure CORS
+    cors_origins = settings.cors_origins_list + [
+        "https://physical-ai-humanoid-robotics-book-navy.vercel.app",
+    ]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[settings.cors_origins],
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["*"],
@@ -82,6 +85,12 @@ def create_app() -> FastAPI:
                 "error_code": "INTERNAL_ERROR",
             },
         )
+
+    # Minimal root health check for deployment testing
+    @app.get("/health")
+    async def root_health():
+        """Minimal health check at root level."""
+        return {"status": "ok"}
 
     # Include API router
     app.include_router(api_router, prefix="/api")

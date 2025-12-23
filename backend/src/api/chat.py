@@ -27,7 +27,7 @@ from ..schemas.auth import (
 from ..schemas.chat import ChatRequest, ChatResponse, SelectedTextRequest, SourceReference
 from ..services.agent_service import AgentService, get_agent_service
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter()
 
 
 @router.post(

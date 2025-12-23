@@ -23,7 +23,7 @@ from ..services.auth_service import (
     get_auth_service,
 )
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter()
 security = HTTPBearer(auto_error=False)
 
 

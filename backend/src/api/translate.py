@@ -18,7 +18,7 @@ from ..schemas.translate import (
 )
 from ..services.translation_service import TranslationService, get_translation_service
 
-router = APIRouter(prefix="/translate", tags=["translate"])
+router = APIRouter()
 
 
 @router.get(
