@@ -1,8 +1,31 @@
-fastapi
-uvicorn
-sqlalchemy>=2.0
-asyncpg
-psycopg2-binary
-pydantic
-python-dotenv
-qdrant-client
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+starlette>=0.35.0
+
+# Database
+sqlalchemy[asyncio]>=2.0.25
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+alembic>=1.13.0
+
+# Data Validation & Settings
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# Vector Database
+qdrant-client>=1.7.0
+
+# Google Gemini API
+google-genai>=0.3.0
+
+# Authentication
+bcrypt>=4.1.0
+python-jose[cryptography]>=3.3.0
+
+# Token Counting
+tiktoken>=0.5.0
+
+# Email Validation (for pydantic EmailStr)
+email-validator>=2.1.0
