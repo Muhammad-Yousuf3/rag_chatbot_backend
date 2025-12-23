@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     database_url: str
 
     # CORS Configuration
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "https://physical-ai-humanoid-robotics-book-navy.vercel.app"
 
     @property
     def cors_origins_list(self) -> List[str]:
