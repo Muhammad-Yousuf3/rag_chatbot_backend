@@ -93,12 +93,15 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
 
-    settings = get_settings()
+    port = int(os.environ.get("PORT", 8080))
+
     uvicorn.run(
         "src.main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=settings.debug,
+        port=port,
+        reload=False,  # IMPORTANT for Railway
     )
+
