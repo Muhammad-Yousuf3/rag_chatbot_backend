@@ -29,8 +29,8 @@ function getApiBaseUrl(): string {
     // Check if running on Vercel production domain
     const hostname = window.location?.hostname || '';
     if (hostname.includes('vercel.app') || hostname.includes('physical-ai-humanoid')) {
-      // Production: Use Railway backend URL
-      return 'https://ragchatbotbackend-production-092a.up.railway.app';
+      // Production: Use Hugging Face backend URL
+      return 'https://muhammadyousuf333-rag-chatbot-with-book.hf.space';
     }
   }
 
