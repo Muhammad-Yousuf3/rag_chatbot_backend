@@ -30,7 +30,7 @@ function getApiBaseUrl(): string {
     const hostname = window.location?.hostname || '';
     if (hostname.includes('vercel.app') || hostname.includes('physical-ai-humanoid')) {
       // Production: Use Hugging Face backend URL
-      return 'https://muhammadyousuf333-rag-chatbot-with-book.hf.space';
+      return 'https://muhammadyousuf333-rag-chatbot-with-book.hf.space/api';
     }
   }
 
