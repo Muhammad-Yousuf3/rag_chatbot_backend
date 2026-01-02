@@ -172,23 +172,37 @@ class GeminiService:
             system_instruction=system_instruction,
         )
 
-        # Generate response
-        try:
-            logger.info(f"Calling Gemini API: model={self.chat_model}")
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: self.client.models.generate_content(
-                    model=self.chat_model,
-                    contents=contents,
-                    config=config,
+        # Retry logic for rate limits
+        delay = 10
+        max_retries = 5
+
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Calling Gemini API: model={self.chat_model} (attempt {attempt + 1}/{max_retries})")
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.models.generate_content(
+                        model=self.chat_model,
+                        contents=contents,
+                        config=config,
+                    )
                 )
-            )
-            logger.info(f"Gemini API response received successfully")
-            return response.text
-        except Exception as e:
-            logger.error(f"Gemini API call failed: {type(e).__name__}: {e}", exc_info=True)
-            raise
+                logger.info(f"Gemini API response received successfully")
+                return response.text
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str or "quota" in error_str.lower() or "ResourceExhausted" in error_str:
+                    wait_time = delay * (2 ** attempt)
+                    if wait_time > 120:
+                        wait_time = 120
+                    logger.warning(f"Chat rate limit hit. Retrying in {wait_time:.1f}s... (Attempt {attempt + 1}/{max_retries})")
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(f"Gemini API call failed: {type(e).__name__}: {e}", exc_info=True)
+                    raise
+
+        raise Exception(f"Failed to get chat completion after {max_retries} retries due to rate limiting")
 
     async def chat_completion_with_json(
         self,

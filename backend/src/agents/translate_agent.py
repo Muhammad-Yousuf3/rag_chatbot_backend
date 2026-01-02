@@ -4,6 +4,7 @@ T057 [US3] - Implements the translation agent using Gemini for
 translating chapter content to Urdu.
 """
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -143,11 +144,14 @@ formatting."""
         if current_chunk:
             chunks.append("\n\n".join(current_chunk))
 
-        # Translate each chunk
+        # Translate each chunk with delay between calls to avoid rate limits
         translated_chunks = []
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
             translated = await self.translate(chunk, target_language)
             translated_chunks.append(translated)
+            # Add delay between chunks to avoid rate limiting (skip after last chunk)
+            if i < len(chunks) - 1:
+                await asyncio.sleep(2)
 
         return "\n\n".join(translated_chunks)
 
@@ -187,6 +191,8 @@ formatting."""
                     batch_text, target_language
                 )
                 translated_segments.extend(translated_batch.split(SEPARATOR))
+                # Add delay between batches to avoid rate limiting
+                await asyncio.sleep(2)
                 current_batch = [segment]
                 current_size = segment_size
             else:
@@ -248,13 +254,16 @@ Text to translate:
         response_count = response.count(SEPARATOR)
 
         if response_count != original_count:
-            # Fallback: translate each segment individually
+            # Fallback: translate each segment individually with delay
             segments = content.split(SEPARATOR)
             translated = []
-            for seg in segments:
+            for i, seg in enumerate(segments):
                 if seg.strip():
                     trans = await self.translate(seg.strip(), target_language)
                     translated.append(trans)
+                    # Add delay between segments to avoid rate limiting
+                    if i < len(segments) - 1:
+                        await asyncio.sleep(2)
                 else:
                     translated.append(seg)
             return SEPARATOR.join(translated)
