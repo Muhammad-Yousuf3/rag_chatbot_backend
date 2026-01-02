@@ -4,10 +4,13 @@ T059-T060 [US3] - Implements GET and POST /api/translate/{chapterSlug} endpoints
 T061 [US3] - Includes progress tracking.
 """
 
+import logging
 from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from ..db.database import get_db
 from ..schemas.translate import (
@@ -137,6 +140,7 @@ async def request_translation(
     Returns:
         TranslationResponse if completed, TranslationPendingResponse if started.
     """
+    logger.info(f"Translation request received for {chapter_slug}, language={request.language}, content_length={len(request.content) if request.content else 0}")
     try:
         # Check if content is provided, otherwise we need a content source
         if not request.content:
@@ -182,9 +186,10 @@ async def request_translation(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Translation request failed for {chapter_slug}: {type(e).__name__}: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while processing the translation request.",
+            detail=f"Translation failed: {str(e)}",
         )
 
 

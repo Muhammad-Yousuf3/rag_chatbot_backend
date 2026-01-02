@@ -5,11 +5,14 @@ translating chapter content to Urdu.
 """
 
 import asyncio
+import logging
 from pathlib import Path
 from typing import Any
 
 from ..config import get_settings
 from ..services.gemini_client import GeminiService, get_gemini_service
+
+logger = logging.getLogger(__name__)
 
 
 class TranslateAgent:
@@ -82,6 +85,8 @@ formatting."""
         if not content or not content.strip():
             return ""
 
+        logger.info(f"Translating content (length={len(content)}) to {target_language}")
+
         # Build messages for translation
         messages = [
             {"role": "system", "content": self.system_prompt},
@@ -89,13 +94,17 @@ formatting."""
         ]
 
         # Call Gemini API
-        response = await self._gemini_client.chat_completion(
-            messages=messages,
-            temperature=0.3,
-            max_tokens=self._max_tokens,
-        )
-
-        return response
+        try:
+            response = await self._gemini_client.chat_completion(
+                messages=messages,
+                temperature=0.3,
+                max_tokens=self._max_tokens,
+            )
+            logger.info(f"Translation successful (response length={len(response)})")
+            return response
+        except Exception as e:
+            logger.error(f"Translation API call failed: {type(e).__name__}: {e}", exc_info=True)
+            raise
 
     async def translate_chunked(
         self,

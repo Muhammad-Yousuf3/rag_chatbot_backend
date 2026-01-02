@@ -5,6 +5,7 @@ and progress tracking.
 """
 
 import hashlib
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,6 +13,8 @@ from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from ..agents.translate_agent import TranslateAgent, get_translate_agent
 from ..models.translation import Translation, TranslationStatus
@@ -149,9 +152,27 @@ class TranslationService:
         if existing.status == "completed":
             return existing
 
-        # Check if translation is in progress
+        # Check if translation is in progress (with staleness check)
         if existing.status in ["pending", "in_progress"]:
-            return existing
+            # Check if it's stale (older than 5 minutes) - likely a crashed request
+            result = await db.execute(
+                select(Translation).where(
+                    Translation.chapter_slug == chapter_slug,
+                    Translation.language == language,
+                )
+            )
+            translation_record = result.scalar_one_or_none()
+            if translation_record:
+                time_elapsed = (datetime.utcnow() - translation_record.updated_at).total_seconds()
+                if time_elapsed > 300:  # 5 minutes
+                    logger.warning(f"Stale in_progress translation found for {chapter_slug}, resetting...")
+                    # Delete stale record so we can start fresh
+                    await db.delete(translation_record)
+                    await db.commit()
+                else:
+                    return existing
+            else:
+                return existing
 
         # Create new translation record
         content_hash = hashlib.sha256(content.encode()).hexdigest()
@@ -169,10 +190,12 @@ class TranslationService:
 
         # Perform translation
         try:
+            logger.info(f"Starting translation for {chapter_slug}, content length: {len(content)}")
             translated_content = await self.translate_agent.translate_chunked(
                 content=content,
                 target_language=language,
             )
+            logger.info(f"Translation completed for {chapter_slug}, translated length: {len(translated_content)}")
 
             # Update translation with result
             translation.content = translated_content
@@ -190,6 +213,7 @@ class TranslationService:
             )
 
         except Exception as e:
+            logger.error(f"Translation failed for {chapter_slug}: {type(e).__name__}: {e}", exc_info=True)
             # Mark translation as failed
             translation.status = TranslationStatus.FAILED
             translation.error_message = str(e)
